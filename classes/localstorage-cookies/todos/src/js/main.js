@@ -2,6 +2,10 @@ const state = {
   todos: [],
 };
 
+let CONFIG = {
+  LocalStorageTodos: 'todos',
+}
+
 const CLASS_LISTS = {
   INPUT: { VALID: 'input-valid', INVALID: 'input-invalid' },
   ERROR: { SHOW: 'error-show', HIDE: 'error-hide' },
@@ -117,6 +121,7 @@ function createTodo({ title, description, date }) {
   };
 
   state.todos.push(todo);
+  updateLS();
   renderTodo(todo);
 }
 
@@ -144,6 +149,7 @@ function removeTodo(id) {
   const todoEl = document.querySelector(`[data-todo-id="${id}"]`);
   todoEl.remove();
   state.todos = state.todos.filter((todo) => todo.id !== id);
+  updateLS();
 }
 
 function makeUUID() {
@@ -158,3 +164,34 @@ function isDateValid(dateStr) {
   //01-01
   return !isNaN(new Date(dateStr));
 }
+
+
+function updateLS(){
+  const todosJson = JSON.stringify(state.todos)
+  localStorage.setItem(CONFIG.LocalStorageTodos, todosJson);
+}
+
+function initToDos(){
+  const todos = localStorage.getItem(CONFIG.LocalStorageTodos);
+  if (todos === null) return;
+
+  const todosJson = JSON.parse(todos);
+  if (todosJson.length === 0) return;
+
+  state.todos = todosJson;
+  state.todos.forEach((todo) => {if (isTodoValid(todo)) renderTodo(todo)});
+}
+
+function isTodoValid({id ,title, description, date}){
+  return checkUUID(id) && 
+    (typeof(title) == 'string'? title.length > 0 : false) &&
+    (typeof(description) == 'string'? description.length > 0 : false) &&
+    isDateValid(date);
+}
+
+function checkUUID(uuid){
+  const regEx = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+  return regEx.test(uuid);
+}
+
+initToDos();
